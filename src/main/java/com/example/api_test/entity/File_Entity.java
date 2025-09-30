@@ -17,6 +17,7 @@ public class File_Entity {
     private int fileSize;
 
     @Lob
+    @Basic(fetch = FetchType.LAZY)
     private byte[] data;
 
     private String uploade_date;
