@@ -4,12 +4,13 @@ package com.example.api_test.controller;
 import com.example.api_test.entity.File_Entity;
 import com.example.api_test.entity.User_info;
 import com.example.api_test.jwt_config.JwtUtil;
+import com.example.api_test.repo.FileRepository;
 import com.example.api_test.repo.UserRepository;
 import com.example.api_test.service.AuthService;
 import com.example.api_test.service.FileService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -37,6 +38,9 @@ public class MainController {
 
     @Autowired
     private FileService fileService;
+
+   @Autowired
+    private FileRepository filerepo;
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody Map<String, String> body) {
@@ -149,5 +153,62 @@ public class MainController {
             return ResponseEntity.badRequest().build();
         }
     }
+    @GetMapping("/files/{id}/download")
+    public ResponseEntity<byte[]> downloadFile(@PathVariable Long id, Authentication authentication) {
+        try {
+            String username = authentication.getName();
+
+            int user_id = userRepository.findIdByUser_Username(username);
+
+            System.out.println("User requesting file: " + username+"User Id  "+ user_id);
+            // Fetch file by id
+            File_Entity file = filerepo.findByIdAndUserId(id, user_id);
+            if (file == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+
+            // Debug log file info
+            System.out.println("Downloading File:");
+            System.out.println("File ID: " + file.getId());
+            System.out.println("File Name: " + file.getFileName());
+            System.out.println("File Type: " + file.getFileType());
+            System.out.println("File Size: " + file.getFileSize());
+            System.out.println("Upload Date: " + file.getUploade_date());
+            System.out.println("Downloads: " + file.getDownloads());
+            System.out.println("-----------------------------");
+
+            // Increase download count
+//            file.setDownloads(file.getDownloads() + 1);
+//            fileService.saveFile(file);
+
+            // Return file as downloadable response
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFileName() + "\"")
+                    .contentType(MediaType.parseMediaType(file.getFileType()))
+                    .body(file.getData());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @DeleteMapping("/files/{id}")
+    public ResponseEntity<?> deleteFile(@PathVariable("id") Long id, Authentication authentication) {
+
+        String username = authentication.getName();
+
+        int userId = userRepository.findIdByUser_Username(username);
+
+        System.out.println("Delete print  "+ id + "USer ID "+ userId);
+        boolean deleted = fileService.deleteFileByUser(id, userId);
+
+        if (deleted) {
+            return ResponseEntity.ok().body("File deleted successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("File not found or unauthorized");
+        }
+    }
+
 
 }

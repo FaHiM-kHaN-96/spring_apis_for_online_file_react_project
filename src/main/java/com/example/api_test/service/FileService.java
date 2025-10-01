@@ -46,4 +46,10 @@ public class FileService {
 
         return fileRepository.save(fileEntity);
     }
+
+
+    public boolean deleteFileByUser(Long fileId, int userId) {
+        int deletedRows = fileRepository.deleteByIdAndUserId(fileId, userId);
+        return deletedRows > 0; // true if a row was deleted
+    }
 }
