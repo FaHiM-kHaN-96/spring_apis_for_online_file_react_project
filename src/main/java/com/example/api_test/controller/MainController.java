@@ -21,6 +21,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api")
@@ -41,6 +45,17 @@ public class MainController {
 
    @Autowired
     private FileRepository filerepo;
+
+
+   private Integer userid;
+
+    public Integer getUserid() {
+        return userid;
+    }
+
+    public void setUserid(Integer userid) {
+        this.userid = userid;
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody Map<String, String> body) {
@@ -100,6 +115,8 @@ public class MainController {
         }
 
         String username = jwtUtil.extractUsername(token);
+        int user_id = userRepository.findIdByUser_Username(username);
+        setUserid(user_id);
         User_info user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             return ResponseEntity.status(401).body(Map.of("message", "User not found"));
@@ -135,10 +152,104 @@ public class MainController {
 
             return ResponseEntity.ok(files);
         } catch (Exception e) {
-            e.printStackTrace(); // print full stack trace
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
+
+    public void startTimer(int seconds, long fileId, int userId ,boolean timer_status ) {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        final int[] remaining = {seconds};
+
+        System.out.println("Timer started for " + seconds + " seconds...");
+        if (timer_status){
+            ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
+                if (remaining[0] > 0) {
+                    System.out.println("Time left: " + remaining[0] + " seconds");
+                    remaining[0]--;
+                } else {
+                    // Timer finished, delete OTP
+                    if (fileService.delete_otp(fileId, userId)) {
+                        System.out.println("Timer finished! OTP deleted.");
+                    }
+                    scheduler.shutdown();
+                }
+            }, 0, 1, TimeUnit.SECONDS);
+
+
+        }
+        System.out.println("Timer stopped");
+
+    }
+
+    @GetMapping("/share/{fileId}/download")
+    public ResponseEntity<String> shareLink(@PathVariable("fileId") long fileId, Authentication authentication) {
+        try {
+            String username = authentication.getName();
+
+            System.out.println("Generate share link for userID: " + getUserid() + " | fileId: " + fileId);
+
+            String password =  FileService.generatePassword(100);
+            System.out.println("password  " + password);
+            String shareLink=null;
+            if (fileService.setOtp(fileId,userid,password)){
+
+                shareLink = "http://localhost:8080/api/share_file/" + password + "/download" ;
+            }
+
+
+
+
+            return ResponseEntity.ok(shareLink);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Error while generating share link");
+        }
+    }
+
+
+
+
+  @PostMapping("/stop/{fileid}")
+    public ResponseEntity<String> stopAfterTimer(
+            @PathVariable("fileid") long fileid,
+            Authentication authentication) {
+
+        try {
+            // Get authenticated user info
+            String username = authentication.getName();
+            System.out.println("Stop timer  "+username);
+            startTimer(120,fileid,getUserid(),false);
+
+                return ResponseEntity.ok("✅ Link action started successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("❌ Error while starting link action");
+        }
+    }
+
+    @PostMapping("/start/{fileid}")
+    public ResponseEntity<String> startAfterTimerd(
+            @PathVariable("fileid") long fileid,
+            Authentication authentication) {
+
+        try {
+            // Get authenticated user info
+            String username = authentication.getName();
+            System.out.println("Stop timer  "+username);
+            startTimer(120,fileid,getUserid(),true);
+            return ResponseEntity.ok("✅ Link action started successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("❌ Error while starting link action");
+        }
+    }
+
+
+
 
 
     @PostMapping("/cs/upload")
@@ -159,6 +270,7 @@ public class MainController {
             String username = authentication.getName();
 
             int user_id = userRepository.findIdByUser_Username(username);
+
 
             System.out.println("User requesting file: " + username+"User Id  "+ user_id);
             // Fetch file by id

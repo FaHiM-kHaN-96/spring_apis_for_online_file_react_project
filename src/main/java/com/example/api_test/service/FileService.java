@@ -9,14 +9,23 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
 public class FileService {
+    private static final String UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String LOWERCASE = "abcdefghijklmnopqrstuvwxyz";
+    private static final String DIGITS = "0123456789";
+    private static final String SPECIAL_CHARS = "!@#$%^&*()-_=+<>?";
 
+    private static final String ALL = UPPERCASE + LOWERCASE + DIGITS + SPECIAL_CHARS;
     private final FileRepository fileRepository;
     private final UserRepository userRepository;
 
@@ -47,6 +56,44 @@ public class FileService {
         return fileRepository.save(fileEntity);
     }
 
+    public static String generatePassword(int length) {
+        SecureRandom random = new SecureRandom();
+        StringBuilder password = new StringBuilder();
+
+        // Ensure at least one character of each type
+        password.append(UPPERCASE.charAt(random.nextInt(UPPERCASE.length())));
+        password.append(LOWERCASE.charAt(random.nextInt(LOWERCASE.length())));
+        password.append(DIGITS.charAt(random.nextInt(DIGITS.length())));
+        password.append(SPECIAL_CHARS.charAt(random.nextInt(SPECIAL_CHARS.length())));
+
+        // Fill remaining characters
+        for (int i = password.length(); i < length; i++) {
+            password.append(ALL.charAt(random.nextInt(ALL.length())));
+        }
+
+        // Shuffle characters
+        char[] pwdArray = password.toString().toCharArray();
+        for (int i = 0; i < pwdArray.length; i++) {
+            int j = random.nextInt(pwdArray.length);
+            char temp = pwdArray[i];
+            pwdArray[i] = pwdArray[j];
+            pwdArray[j] = temp;
+        }
+
+        return new String(pwdArray);
+    }
+
+
+
+    public boolean setOtp(Long fileId, int userId, String otp) {
+        int updatedRows = fileRepository.updateOtpByFileIdAndUserId(otp, fileId, userId);
+        return updatedRows > 0; // যদি অন্তত ১টা row আপডেট হয় → true
+    }
+
+    public boolean delete_otp(Long fileId, int userId) {
+        int updatedRows = fileRepository.deleteOtpByFileIdAndUserId(fileId, userId);
+        return updatedRows > 0; // যদি অন্তত ১টা row আপডেট হয় → true
+    }
 
     public boolean deleteFileByUser(Long fileId, int userId) {
         int deletedRows = fileRepository.deleteByIdAndUserId(fileId, userId);

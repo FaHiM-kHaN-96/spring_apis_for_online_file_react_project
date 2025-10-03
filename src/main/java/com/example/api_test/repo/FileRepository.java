@@ -20,6 +20,20 @@ public interface FileRepository extends JpaRepository<File_Entity, Long> {
     @Query("SELECT f FROM File_Entity f WHERE f.id = :fileId AND f.user.id = :userId")
     File_Entity findByIdAndUserId(@Param("fileId") Long fileId, @Param("userId") int userId);
 
+    @Transactional
+    @Modifying
+    @Query("UPDATE File_Entity f SET f.fileotp = :fileotp WHERE f.id = :fileId AND f.user.id = :userId")
+    int updateOtpByFileIdAndUserId(@Param("fileotp") String fileotp,
+                                   @Param("fileId") Long fileId,
+                                   @Param("userId") int userId);
+
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE File_Entity f SET f.fileotp = NULL WHERE f.id = :fileId AND f.user.id = :userId")
+    int deleteOtpByFileIdAndUserId(@Param("fileId") Long fileId,
+                                   @Param("userId") int userId);
+
 
     @Transactional
     @Modifying
