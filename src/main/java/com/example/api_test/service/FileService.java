@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -81,6 +82,35 @@ public class FileService {
         }
 
         return new String(pwdArray);
+    }
+    public void startTimer(int seconds, long fileId, int userId ,boolean timer_status ) {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        final int[] remaining = {seconds};
+
+        System.out.println("Timer started for " + seconds + " seconds...");
+        if (timer_status){
+            ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
+                if (remaining[0] > 0) {
+                    System.out.println("Time left: " + remaining[0] + " seconds");
+                    if (fileRepository.isFileOtpNull(fileId)){
+                        System.out.println("timer should be stop here ");
+                        scheduler.shutdown();
+                    }
+                    remaining[0]--;
+                } else {
+                    // Timer finished, delete OTP
+                    if (delete_otp(fileId, userId)) {
+                        System.out.println("Timer finished! OTP deleted.");
+                    }
+                    scheduler.shutdown();
+                }
+            }, 0, 1, TimeUnit.SECONDS);
+
+
+        }
+        System.out.println("Timer stopped");
+
     }
 
 

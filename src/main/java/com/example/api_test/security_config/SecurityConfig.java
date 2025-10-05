@@ -49,7 +49,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/share_file/**").permitAll()
                         .requestMatchers("/api/login", "/api/signup").permitAll()
+                        .requestMatchers("/api/**").hasAnyAuthority("ROLE_USER")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

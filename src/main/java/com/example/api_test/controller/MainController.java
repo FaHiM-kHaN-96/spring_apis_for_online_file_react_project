@@ -7,6 +7,7 @@ import com.example.api_test.jwt_config.JwtUtil;
 import com.example.api_test.repo.FileRepository;
 import com.example.api_test.repo.UserRepository;
 import com.example.api_test.service.AuthService;
+import com.example.api_test.service.Encryption_L;
 import com.example.api_test.service.FileService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -46,6 +48,9 @@ public class MainController {
    @Autowired
     private FileRepository filerepo;
 
+   @Autowired
+   private Encryption_L encryptionL;
+
 
    private Integer userid;
 
@@ -60,6 +65,8 @@ public class MainController {
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody Map<String, String> body) {
         String fullname = body.get("fullname");
+
+        System.out.println("Check signup full name   "+ fullname);
         String email = body.get("email");
         String password = body.get("password");
 
@@ -157,34 +164,11 @@ public class MainController {
         }
     }
 
-    public void startTimer(int seconds, long fileId, int userId ,boolean timer_status ) {
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
-        final int[] remaining = {seconds};
-
-        System.out.println("Timer started for " + seconds + " seconds...");
-        if (timer_status){
-            ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
-                if (remaining[0] > 0) {
-                    System.out.println("Time left: " + remaining[0] + " seconds");
-                    remaining[0]--;
-                } else {
-                    // Timer finished, delete OTP
-                    if (fileService.delete_otp(fileId, userId)) {
-                        System.out.println("Timer finished! OTP deleted.");
-                    }
-                    scheduler.shutdown();
-                }
-            }, 0, 1, TimeUnit.SECONDS);
-
-
-        }
-        System.out.println("Timer stopped");
-
-    }
 
     @GetMapping("/share/{fileId}/download")
     public ResponseEntity<String> shareLink(@PathVariable("fileId") long fileId, Authentication authentication) {
+
+        System.out.println("share link triggerd");
         try {
             String username = authentication.getName();
 
@@ -193,15 +177,22 @@ public class MainController {
             String password =  FileService.generatePassword(100);
             System.out.println("password  " + password);
             String shareLink=null;
-            if (fileService.setOtp(fileId,userid,password)){
+            String encrypt_pass = encryptionL.encode(password);
+            System.out.println("encode pass "+ encrypt_pass);
+            boolean password_exist = filerepo.existsByfileotp(password);
 
-                shareLink = "http://localhost:8080/api/share_file/" + password + "/download" ;
+            if (fileService.setOtp(fileId,userid,password) && !password_exist){
+                System.out.println("Saved password  "+ password);
+
+                shareLink = "http://192.168.1.183:8080/share_file/" + encrypt_pass  ;
+                return ResponseEntity.ok(shareLink);
+
+            }else {
+                return ResponseEntity.badRequest().body("Invalid link please try again");
             }
 
 
 
-
-            return ResponseEntity.ok(shareLink);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body("Error while generating share link");
@@ -220,7 +211,7 @@ public class MainController {
             // Get authenticated user info
             String username = authentication.getName();
             System.out.println("Stop timer  "+username);
-            startTimer(120,fileid,getUserid(),false);
+           fileService.startTimer(120,fileid,getUserid(),false);
 
                 return ResponseEntity.ok("✅ Link action started successfully");
         } catch (Exception e) {
@@ -235,11 +226,13 @@ public class MainController {
             @PathVariable("fileid") long fileid,
             Authentication authentication) {
 
+
+        System.out.println("Start timer triggered ");
         try {
             // Get authenticated user info
             String username = authentication.getName();
             System.out.println("Stop timer  "+username);
-            startTimer(120,fileid,getUserid(),true);
+           fileService.startTimer(120,fileid,getUserid(),true);
             return ResponseEntity.ok("✅ Link action started successfully");
         } catch (Exception e) {
             e.printStackTrace();
@@ -304,6 +297,7 @@ public class MainController {
             return ResponseEntity.badRequest().build();
         }
     }
+
 
     @DeleteMapping("/files/{id}")
     public ResponseEntity<?> deleteFile(@PathVariable("id") Long id, Authentication authentication) {
