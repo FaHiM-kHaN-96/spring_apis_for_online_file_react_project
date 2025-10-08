@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = {"http://localhost:3000", "http://192.168.1.183:3000"}, allowCredentials = "true")
+//@CrossOrigin(origins = {"http://localhost:3000", "http://192.168.1.183:3000"}, allowCredentials = "true")
 public class MainController {
 
     @Autowired
@@ -183,8 +183,12 @@ public class MainController {
 
             if (fileService.setOtp(fileId,userid,password) && !password_exist){
                 System.out.println("Saved password  "+ password);
-
-                shareLink = "http://192.168.1.183:8080/share_file/" + encrypt_pass  ;
+                try {
+                    Thread.sleep(2000); // 2000 milliseconds = 2 seconds
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt(); // Restore interrupted status
+                }
+                shareLink = "https://machine-javier-ungarrulously.ngrok-free.dev/share_file/" + encrypt_pass  ;
                 return ResponseEntity.ok(shareLink);
 
             }else {
@@ -232,6 +236,13 @@ public class MainController {
             // Get authenticated user info
             String username = authentication.getName();
             System.out.println("Stop timer  "+username);
+
+            try {
+                System.out.println("After 2 second Start trigger  s "+ fileid);
+                Thread.sleep(2000); // 2000 milliseconds = 2 seconds
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // Restore interrupted status
+            }
            fileService.startTimer(120,fileid,getUserid(),true);
             return ResponseEntity.ok("✅ Link action started successfully");
         } catch (Exception e) {

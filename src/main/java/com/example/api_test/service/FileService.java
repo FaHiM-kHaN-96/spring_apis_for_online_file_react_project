@@ -25,6 +25,15 @@ public class FileService {
     private static final String LOWERCASE = "abcdefghijklmnopqrstuvwxyz";
     private static final String DIGITS = "0123456789";
     private static final String SPECIAL_CHARS = "!@#$%^&*()-_=+<>?";
+    private long file_id;
+
+    public long getFile_id() {
+        return file_id;
+    }
+
+    public void setFile_id(long file_id) {
+        this.file_id = file_id;
+    }
 
     private static final String ALL = UPPERCASE + LOWERCASE + DIGITS + SPECIAL_CHARS;
     private final FileRepository fileRepository;
@@ -86,6 +95,8 @@ public class FileService {
     public void startTimer(int seconds, long fileId, int userId ,boolean timer_status ) {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
+        System.out.println("Print file id stop here "+ fileId);
+        setFile_id(fileId);
         final int[] remaining = {seconds};
 
         System.out.println("Timer started for " + seconds + " seconds...");
@@ -93,7 +104,8 @@ public class FileService {
             ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
                 if (remaining[0] > 0) {
                     System.out.println("Time left: " + remaining[0] + " seconds");
-                    if (fileRepository.isFileOtpNull(fileId)){
+                    System.out.println("File otp null or not  "+fileRepository.isFileOtpNull(getFile_id()));
+                    if (fileRepository.isFileOtpNull(getFile_id())){
                         System.out.println("timer should be stop here ");
                         scheduler.shutdown();
                     }
