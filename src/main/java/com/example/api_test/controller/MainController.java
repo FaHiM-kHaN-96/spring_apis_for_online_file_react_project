@@ -188,6 +188,7 @@ public class MainController {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt(); // Restore interrupted status
                 }
+                fileService.startTimer(120,fileId,getUserid(),true);
                 shareLink = "https://machine-javier-ungarrulously.ngrok-free.dev/share_file/" + encrypt_pass  ;
                 return ResponseEntity.ok(shareLink);
 
@@ -217,7 +218,9 @@ public class MainController {
             System.out.println("Stop timer  "+username);
            fileService.startTimer(120,fileid,getUserid(),false);
 
+
                 return ResponseEntity.ok("✅ Link action started successfully");
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -237,12 +240,7 @@ public class MainController {
             String username = authentication.getName();
             System.out.println("Stop timer  "+username);
 
-            try {
-                System.out.println("After 2 second Start trigger  s "+ fileid);
-                Thread.sleep(2000); // 2000 milliseconds = 2 seconds
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt(); // Restore interrupted status
-            }
+
            fileService.startTimer(120,fileid,getUserid(),true);
             return ResponseEntity.ok("✅ Link action started successfully");
         } catch (Exception e) {
