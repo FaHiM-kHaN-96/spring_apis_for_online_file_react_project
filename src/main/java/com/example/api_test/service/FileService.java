@@ -129,16 +129,16 @@ public class FileService {
 
     public boolean setOtp(Long fileId, int userId, String otp) {
         int updatedRows = fileRepository.updateOtpByFileIdAndUserId(otp, fileId, userId);
-        return updatedRows > 0; // যদি অন্তত ১টা row আপডেট হয় → true
+        return updatedRows > 0;
     }
 
     public boolean delete_otp(Long fileId, int userId) {
         int updatedRows = fileRepository.deleteOtpByFileIdAndUserId(fileId, userId);
-        return updatedRows > 0; // যদি অন্তত ১টা row আপডেট হয় → true
+        return updatedRows > 0;
     }
 
     public boolean deleteFileByUser(Long fileId, int userId) {
         int deletedRows = fileRepository.deleteByIdAndUserId(fileId, userId);
-        return deletedRows > 0; // true if a row was deleted
+        return deletedRows > 0;
     }
 }

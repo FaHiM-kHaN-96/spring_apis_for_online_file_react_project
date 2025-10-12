@@ -19,35 +19,23 @@ public class User_info {
     private String password;
     private String fullname;
     private String roles;
+    private String one_time_password;
+    private boolean verification_status;
     @OneToMany(cascade = CascadeType.ALL)
     private List<File_Entity> fIleModels = new ArrayList<>();
 
     @Override
     public String toString() {
-        return "UserModel{" +
+        return "User_info{" +
                 "id=" + id +
                 ", username='" + username + '\'' +
                 ", password='" + password + '\'' +
                 ", fullname='" + fullname + '\'' +
                 ", roles='" + roles + '\'' +
+                ", one_time_password='" + one_time_password + '\'' +
+                ", verification_status=" + verification_status +
                 ", fIleModels=" + fIleModels +
                 '}';
-    }
-
-    public List<File_Entity> getfIleModels() {
-        return fIleModels;
-    }
-
-    public void setfIleModels(List<File_Entity> fIleModels) {
-        this.fIleModels = fIleModels;
-    }
-
-    public String getRoles() {
-        return roles;
-    }
-
-    public void setRoles(String roles) {
-        this.roles = roles;
     }
 
     public int getId() {
@@ -80,5 +68,37 @@ public class User_info {
 
     public void setFullname(String fullname) {
         this.fullname = fullname;
+    }
+
+    public String getRoles() {
+        return roles;
+    }
+
+    public void setRoles(String roles) {
+        this.roles = roles;
+    }
+
+    public String getOne_time_password() {
+        return one_time_password;
+    }
+
+    public void setOne_time_password(String one_time_password) {
+        this.one_time_password = one_time_password;
+    }
+
+    public boolean isVerification_status() {
+        return verification_status;
+    }
+
+    public void setVerification_status(boolean verification_status) {
+        this.verification_status = verification_status;
+    }
+
+    public List<File_Entity> getfIleModels() {
+        return fIleModels;
+    }
+
+    public void setfIleModels(List<File_Entity> fIleModels) {
+        this.fIleModels = fIleModels;
     }
 }

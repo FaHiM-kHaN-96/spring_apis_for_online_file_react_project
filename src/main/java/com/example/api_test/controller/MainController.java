@@ -7,6 +7,7 @@ import com.example.api_test.jwt_config.JwtUtil;
 import com.example.api_test.repo.FileRepository;
 import com.example.api_test.repo.UserRepository;
 import com.example.api_test.service.AuthService;
+import com.example.api_test.service.EmailService;
 import com.example.api_test.service.Encryption_L;
 import com.example.api_test.service.FileService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,6 +51,10 @@ public class MainController {
 
    @Autowired
    private Encryption_L encryptionL;
+
+
+   @Autowired
+   private EmailService emailService;
 
 
    private Integer userid;
@@ -112,17 +117,20 @@ public class MainController {
     @GetMapping("/me")
     public ResponseEntity<?> me(HttpServletRequest request) {
         final String authHeader = request.getHeader("Authorization");
+        System.out.printf("authHeader:  ", authHeader);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(401).body(Map.of("message", "Missing token"));
         }
 
         String token = authHeader.substring(7);
+        System.out.println("token: " + token);
         if (!jwtUtil.validateToken(token)) {
             return ResponseEntity.status(401).body(Map.of("message", "Invalid token"));
         }
 
         String username = jwtUtil.extractUsername(token);
         int user_id = userRepository.findIdByUser_Username(username);
+        System.out.printf("print userid  "+user_id);
         setUserid(user_id);
         User_info user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
@@ -141,29 +149,62 @@ public class MainController {
     public ResponseEntity<List<File_Entity>> getUserFiles(Authentication authentication) {
         try {
             String username = authentication.getName();
-            System.out.println("Fetching files for user: " + username);
+            int user_id = userRepository.findIdByUser_Username(username);
+            setUserid(user_id);
+            //userRepository.check_verification(getUserid());
+            if (userRepository.check_verification(getUserid())) {
+                System.out.println("Fetching files for user: " + username);
 
-            // Fetch user's files from service
-            List<File_Entity> files = fileService.getUserFiles(username);
+                // setUserid(null);
+                if (user_id == 0 && username == null) {
+                    System.out.printf("Userid is null for username ");
+                }
+                System.out.printf("Fetching files userID: " + user_id);
 
-            // Print each file to console
-            for (File_Entity file : files) {
-                System.out.println("File ID: " + file.getId());
-                System.out.println("File Name: " + file.getFileName());
-                System.out.println("File Type: " + file.getFileType());
-                System.out.println("File Size: " + file.getFileSize());
-                System.out.println("Upload Date: " + file.getUploade_date());
-                System.out.println("Downloads: " + file.getDownloads());
-                System.out.println("-----------------------------");
+                // Fetch user's files from service
+                List<File_Entity> files = fileService.getUserFiles(username);
+
+                // Print each file to console
+                for (File_Entity file : files) {
+                    System.out.println("File ID: " + file.getId());
+                    System.out.println("File Name: " + file.getFileName());
+                    System.out.println("File Type: " + file.getFileType());
+                    System.out.println("File Size: " + file.getFileSize());
+                    System.out.println("Upload Date: " + file.getUploade_date());
+                    System.out.println("Downloads: " + file.getDownloads());
+                    System.out.println("-----------------------------");
+                }
+
+                return ResponseEntity.ok(files);
+            }else {
+                emaiilSender(getUserid());
+                return ResponseEntity.badRequest().build();
             }
-
-            return ResponseEntity.ok(files);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
 
+
+
+    private void emaiilSender(int id) {
+
+        String otp = encryptionL.encode(authService.user_verification_code_genaretor(200));
+
+        System.out.printf("verification code  "+otp);
+      //  System.out.printf("decoded verification code "+ encryptionL.decode(otp) );
+        if (userRepository.isOtpAvailable(encryptionL.decode(otp))){
+            if (authService.set_verification_code(id,encryptionL.decode(otp) )) {
+                String link = "https://unmanacled-shela-fathomlessly.ngrok-free.dev/verification/"+otp;
+                emailService.sendVerificationEmail(id,link);
+                System.out.printf("verification code not found && send code successfully  ");
+            }
+
+        }
+
+        System.out.printf("verification code found  ");
+    }
 
     @GetMapping("/share/{fileId}/download")
     public ResponseEntity<String> shareLink(@PathVariable("fileId") long fileId, Authentication authentication) {
@@ -189,7 +230,7 @@ public class MainController {
                     Thread.currentThread().interrupt(); // Restore interrupted status
                 }
                 fileService.startTimer(120,fileId,getUserid(),true);
-                shareLink = "https://machine-javier-ungarrulously.ngrok-free.dev/share_file/" + encrypt_pass  ;
+                shareLink = "https://unmanacled-shela-fathomlessly.ngrok-free.dev/share_file/" + encrypt_pass  ;
                 return ResponseEntity.ok(shareLink);
 
             }else {
