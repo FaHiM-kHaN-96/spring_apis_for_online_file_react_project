@@ -104,11 +104,29 @@ public class MainController {
 
             String token = jwtUtil.generateToken(user.getUsername(), claims);
 
-            return ResponseEntity.ok(Map.of(
-                    "message", "Login successful",
-                    "token", token,
-                    "username", user.getUsername()
-            ));
+
+
+            if (!userRepository.check_verification(user.getId())) {
+                System.out.println("Verification email sent successfully to user: " + username);
+                boolean mailSent = emaiilSender(user.getId());
+                if (mailSent ){
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of(
+                                    "success", false,
+                                    "message", "Account not verified. Verification email sent successfully!"
+                            ));
+                    }
+
+
+            }else {
+                return ResponseEntity.ok(Map.of(
+                        "message", "Login successful",
+                        "token", token,
+                        "username", user.getUsername()
+                ));
+            }
+            return ResponseEntity.status(401).body(Map.of("message", "Login failed: " + "Internal error"));
+
         } catch (RuntimeException ex) {
             return ResponseEntity.status(401).body(Map.of("message", "Login failed: " + ex.getMessage()));
         }
@@ -146,7 +164,7 @@ public class MainController {
     }
 
     @GetMapping("/files")
-    public ResponseEntity<List<File_Entity>> getUserFiles(Authentication authentication) {
+    public ResponseEntity<?> getUserFiles(Authentication authentication) {
         try {
             String username = authentication.getName();
             int user_id = userRepository.findIdByUser_Username(username);
@@ -176,35 +194,72 @@ public class MainController {
                 }
 
                 return ResponseEntity.ok(files);
-            }else {
-                emaiilSender(getUserid());
-                return ResponseEntity.badRequest().build();
+            } else {
+
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "Account not verified and email sending failed!"
+                        ));
             }
+
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "An unexpected error occurred: " + e.getMessage()
+                    ));
         }
     }
 
 
 
-    private void emaiilSender(int id) {
+    private boolean emaiilSender(int id) {
+        try {
+            // ✅ নতুন OTP তৈরি
+            String otp = encryptionL.encode(authService.user_verification_code_genaretor(200));
+            System.out.println("Generated verification code: " + otp);
 
-        String otp = encryptionL.encode(authService.user_verification_code_genaretor(200));
+            // ✅ ডিকোড করা OTP চেক
+            String decodedOtp = encryptionL.decode(otp);
 
-        System.out.printf("verification code  "+otp);
-      //  System.out.printf("decoded verification code "+ encryptionL.decode(otp) );
-        if (userRepository.isOtpAvailable(encryptionL.decode(otp))){
-            if (authService.set_verification_code(id,encryptionL.decode(otp) )) {
-                String link = "https://unmanacled-shela-fathomlessly.ngrok-free.dev/verification/"+otp;
-                emailService.sendVerificationEmail(id,link);
-                System.out.printf("verification code not found && send code successfully  ");
+            // ✅ যদি একই OTP ডাটাবেজে না থাকে
+            if (userRepository.isOtpAvailable(decodedOtp)) {
+
+                // ✅ OTP সেট করা হয়েছে কিনা চেক
+                if (authService.set_verification_code(id, decodedOtp)) {
+
+
+                    String link = "https://unmanacled-shela-fathomlessly.ngrok-free.dev/verification/" + otp;
+
+
+                    boolean emailSent = emailService.sendVerificationEmail(id, link);
+
+                    if (emailSent) {
+                        System.out.println("Verification code not found & email sent successfully!");
+                        return true;
+                    } else {
+                        System.err.println("Email sending failed!");
+                        return false;
+                    }
+                } else {
+                    System.err.println("Failed to set verification code for user ID: " + id);
+                    return false;
+                }
+
+            } else {
+                System.out.println("Verification code already exists in database!");
+                return false;
             }
 
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Unexpected error in emailSender: " + e.getMessage());
+            return false; // ❌ কোনো exception ঘটলে false
         }
-
-        System.out.printf("verification code found  ");
     }
+
 
     @GetMapping("/share/{fileId}/download")
     public ResponseEntity<String> shareLink(@PathVariable("fileId") long fileId, Authentication authentication) {

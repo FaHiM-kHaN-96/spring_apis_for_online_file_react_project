@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/static/**", "/*.html", "/favicon.ico", "/manifest.json").permitAll()
+                        .requestMatchers("/static/**", "/*.html", "/favicon.ico", "/manifest.json","/verification/**").permitAll()
                         .requestMatchers("/**").permitAll()
                         .requestMatchers("/share_file/**").permitAll()
                         .requestMatchers("/api/login", "/api/signup").permitAll()
