@@ -27,13 +27,13 @@ public class FileService {
     private final String SPECIAL_CHARS = "!@#$%^&*()-_=+<>?";
     private long file_id;
 
-    public long getFile_id() {
-        return file_id;
-    }
-
-    public void setFile_id(long file_id) {
-        this.file_id = file_id;
-    }
+//    public long getFile_id() {
+//        return file_id;
+//    }
+//
+//    public void setFile_id(long file_id) {
+//        this.file_id = file_id;
+//    }
 
     private final String ALL = UPPERCASE + LOWERCASE + DIGITS + SPECIAL_CHARS;
     private final FileRepository fileRepository;
@@ -96,7 +96,7 @@ public class FileService {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
         System.out.println("Print file id stop here "+ fileId);
-        setFile_id(fileId);
+//        setFile_id(fileId);
         final int[] remaining = {seconds};
 
         System.out.println("Timer started for " + seconds + " seconds...");
@@ -111,7 +111,7 @@ public class FileService {
                         }
                         System.out.println("timer forced to be stop here ");
                     }
-                    if (fileRepository.isFileOtpNull(getFile_id())){
+                    if (fileRepository.isFileOtpNull(fileId)){
                         System.out.println("timer should be stop here ");
                         scheduler.shutdown();
                     }

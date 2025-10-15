@@ -57,15 +57,7 @@ public class MainController {
    private EmailService emailService;
 
 
-   private Integer userid;
 
-    public Integer getUserid() {
-        return userid;
-    }
-
-    public void setUserid(Integer userid) {
-        this.userid = userid;
-    }
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody Map<String, String> body) {
@@ -149,7 +141,7 @@ public class MainController {
         String username = jwtUtil.extractUsername(token);
         int user_id = userRepository.findIdByUser_Username(username);
         System.out.printf("print userid  "+user_id);
-        setUserid(user_id);
+
         User_info user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             return ResponseEntity.status(401).body(Map.of("message", "User not found"));
@@ -168,9 +160,9 @@ public class MainController {
         try {
             String username = authentication.getName();
             int user_id = userRepository.findIdByUser_Username(username);
-            setUserid(user_id);
+            System.out.println("removed local variable " +user_id);
             //userRepository.check_verification(getUserid());
-            if (userRepository.check_verification(getUserid())) {
+            if (userRepository.check_verification(user_id)) {
                 System.out.println("Fetching files for user: " + username);
 
                 // setUserid(null);
@@ -268,8 +260,9 @@ public class MainController {
         try {
             String username = authentication.getName();
 
-            System.out.println("Generate share link for userID: " + getUserid() + " | fileId: " + fileId);
-
+            System.out.println("Generate share link for userID: " + " | fileId: " + fileId);
+            int user_id = userRepository.findIdByUser_Username(username);
+            System.out.println("removed local variable " +user_id);
             String password =  fileService.generatePassword(100);
             System.out.println("password  " + password);
             String shareLink=null;
@@ -277,14 +270,14 @@ public class MainController {
             System.out.println("encode pass "+ encrypt_pass);
             boolean password_exist = filerepo.existsByfileotp(password);
 
-            if (fileService.setOtp(fileId,userid,password) && !password_exist){
+            if (fileService.setOtp(fileId,user_id,password) && !password_exist){
                 System.out.println("Saved password  "+ password);
                 try {
                     Thread.sleep(2000); // 2000 milliseconds = 2 seconds
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt(); // Restore interrupted status
                 }
-                fileService.startTimer(120,fileId,getUserid(),true);
+                fileService.startTimer(120,fileId,user_id,true);
                 shareLink = "https://unmanacled-shela-fathomlessly.ngrok-free.dev/share_file/" + encrypt_pass  ;
                 return ResponseEntity.ok(shareLink);
 
@@ -311,8 +304,10 @@ public class MainController {
         try {
             // Get authenticated user info
             String username = authentication.getName();
+            int user_id = userRepository.findIdByUser_Username(username);
+            System.out.println("removed local variable " +user_id);
             System.out.println("Stop timer  "+username);
-           fileService.startTimer(120,fileid,getUserid(),false);
+           fileService.startTimer(120,fileid,user_id,false);
 
 
                 return ResponseEntity.ok("✅ Link action started successfully");
@@ -335,9 +330,10 @@ public class MainController {
             // Get authenticated user info
             String username = authentication.getName();
             System.out.println("Stop timer  "+username);
+            int user_id = userRepository.findIdByUser_Username(username);
+            System.out.println("removed local variable " +user_id);
 
-
-           fileService.startTimer(120,fileid,getUserid(),true);
+           fileService.startTimer(120,fileid,user_id,true);
             return ResponseEntity.ok("✅ Link action started successfully");
         } catch (Exception e) {
             e.printStackTrace();

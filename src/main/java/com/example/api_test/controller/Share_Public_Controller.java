@@ -37,24 +37,7 @@ public class Share_Public_Controller {
     @Autowired
     private Encryption_L encryptionL;
 
-    private int user_id;
-    private long fileid;
 
-    public long getFileid() {
-        return fileid;
-    }
-
-    public void setFileid(long fileid) {
-        this.fileid = fileid;
-    }
-
-    public int getUser_id() {
-        return user_id;
-    }
-
-    public void setUser_id(int user_id) {
-        this.user_id = user_id;
-    }
 
     @GetMapping("/{otp_pass}")
     public ResponseEntity<byte[]> sharedownloadFile(@PathVariable("otp_pass") String otp_pass,HttpHeaders headers) {
@@ -68,10 +51,9 @@ public class Share_Public_Controller {
 
             if (!filerepo.existsByfileotp(decode_pass)) {
                 System.out.println("OTP deleted.");
-//                return ResponseEntity.status(HttpStatus.GONE) // 410 Gone
-//                        .body("OTP already used".getBytes());
+
             }
-            // System.out.println("Share requesting file: " + username+"User Id  "+ user_id);
+
 
             File_Entity file = filerepo.findByFileOtp(decode_pass);
             if (file == null){
@@ -79,7 +61,7 @@ public class Share_Public_Controller {
                         .body("Link in not valid".getBytes());
             }
             int user_id = file.getUser().getId() ;
-            setUser_id(user_id);
+       //     setUser_id(user_id);
             System.out.println("Print UserID " +user_id);
             if (file == null) {
                 System.out.println("File is null share");
@@ -90,7 +72,7 @@ public class Share_Public_Controller {
                 // Debug log file info
                 System.out.println("Share downloading File:");
                 System.out.println("File ID: " + file.getId());
-                setFileid(file.getId());
+              //  setFileid(file.getId());
                 System.out.println("File Name: " + file.getFileName());
                 System.out.println("File Type: " + file.getFileType());
                 System.out.println("File Size: " + file.getFileSize());
@@ -123,20 +105,5 @@ public class Share_Public_Controller {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
-    @GetMapping("/stop/timer")
-    public ResponseEntity<String> stopAfterTimer() {
 
-        System.out.println("Use this method stop/timer");
-
-        try {
-
-           fileService.startTimer(0,getFileid(),getUser_id(),false);
-
-            return ResponseEntity.ok("✅ File Downloader successfully");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("❌ Error while starting link action");
-        }
-    }
 }
