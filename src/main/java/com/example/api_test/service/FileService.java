@@ -104,11 +104,12 @@ public class FileService {
             ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
                 if (remaining[0] > 0) {
                     System.out.println("Time left: " + remaining[0] + " seconds");
-                    System.out.println("File otp null or not  "+fileRepository.isFileOtpNull(getFile_id()));
+                  //  System.out.println("File otp null or not  "+fileRepository.isFileOtpNull(getFile_id()));
                     if (!timer_status) {
-
-                        System.out.println("timer should be stop here ");
-                        scheduler.shutdown();
+                        if (delete_otp(fileId, userId)) {
+                            System.out.println("Timer forced stop! OTP deleted.");
+                        }
+                        System.out.println("timer forced to be stop here ");
                     }
                     if (fileRepository.isFileOtpNull(getFile_id())){
                         System.out.println("timer should be stop here ");
