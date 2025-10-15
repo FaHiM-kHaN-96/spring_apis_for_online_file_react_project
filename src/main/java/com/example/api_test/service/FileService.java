@@ -100,11 +100,16 @@ public class FileService {
         final int[] remaining = {seconds};
 
         System.out.println("Timer started for " + seconds + " seconds...");
-        if (timer_status){
+
             ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
                 if (remaining[0] > 0) {
                     System.out.println("Time left: " + remaining[0] + " seconds");
                     System.out.println("File otp null or not  "+fileRepository.isFileOtpNull(getFile_id()));
+                    if (!timer_status) {
+
+                        System.out.println("timer should be stop here ");
+                        scheduler.shutdown();
+                    }
                     if (fileRepository.isFileOtpNull(getFile_id())){
                         System.out.println("timer should be stop here ");
                         scheduler.shutdown();
@@ -120,7 +125,7 @@ public class FileService {
             }, 0, 1, TimeUnit.SECONDS);
 
 
-        }
+
         System.out.println("Timer stopped");
 
     }
