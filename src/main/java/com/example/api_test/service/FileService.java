@@ -21,10 +21,10 @@ import java.util.stream.Collectors;
 
 @Service
 public class FileService {
-    private static final String UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private static final String LOWERCASE = "abcdefghijklmnopqrstuvwxyz";
-    private static final String DIGITS = "0123456789";
-    private static final String SPECIAL_CHARS = "!@#$%^&*()-_=+<>?";
+    private final String UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private final String LOWERCASE = "abcdefghijklmnopqrstuvwxyz";
+    private final String DIGITS = "0123456789";
+    private final String SPECIAL_CHARS = "!@#$%^&*()-_=+<>?";
     private long file_id;
 
     public long getFile_id() {
@@ -35,7 +35,7 @@ public class FileService {
         this.file_id = file_id;
     }
 
-    private static final String ALL = UPPERCASE + LOWERCASE + DIGITS + SPECIAL_CHARS;
+    private final String ALL = UPPERCASE + LOWERCASE + DIGITS + SPECIAL_CHARS;
     private final FileRepository fileRepository;
     private final UserRepository userRepository;
 
@@ -66,7 +66,7 @@ public class FileService {
         return fileRepository.save(fileEntity);
     }
 
-    public static String generatePassword(int length) {
+    public String generatePassword(int length) {
         SecureRandom random = new SecureRandom();
         StringBuilder password = new StringBuilder();
 

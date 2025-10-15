@@ -270,7 +270,7 @@ public class MainController {
 
             System.out.println("Generate share link for userID: " + getUserid() + " | fileId: " + fileId);
 
-            String password =  FileService.generatePassword(100);
+            String password =  fileService.generatePassword(100);
             System.out.println("password  " + password);
             String shareLink=null;
             String encrypt_pass = encryptionL.encode(password);
