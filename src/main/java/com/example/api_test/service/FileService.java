@@ -59,7 +59,9 @@ public class FileService {
        // fileEntity.setFileotp(generateOtp());
         fileEntity.setFileSize((int) file.getSize());
         fileEntity.setData(file.getBytes());
-        fileEntity.setUploade_date(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedDate = LocalDateTime.now().format(formatter);
+        fileEntity.setUploade_date(formattedDate);
         fileEntity.setDownloads(0);
         fileEntity.setUser(user);
 

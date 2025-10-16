@@ -3,6 +3,7 @@ package com.example.api_test.controller;
 
 import com.example.api_test.entity.File_Entity;
 import com.example.api_test.entity.User_info;
+import com.example.api_test.helper.ServeFile_Helper;
 import com.example.api_test.jwt_config.JwtUtil;
 import com.example.api_test.repo.FileRepository;
 import com.example.api_test.repo.UserRepository;
@@ -20,10 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -173,19 +171,31 @@ public class MainController {
 
                 // Fetch user's files from service
                 List<File_Entity> files = fileService.getUserFiles(username);
+                List<ServeFile_Helper> specific_file_details = new ArrayList<>();
 
                 // Print each file to console
                 for (File_Entity file : files) {
+                    ServeFile_Helper helper = new ServeFile_Helper();
+
                     System.out.println("File ID: " + file.getId());
+                    helper.setId(file.getId());
                     System.out.println("File Name: " + file.getFileName());
+                    helper.setFileName(file.getFileName());
                     System.out.println("File Type: " + file.getFileType());
+                    helper.setFileType(file.getFileType());
                     System.out.println("File Size: " + file.getFileSize());
+                    helper.setFileSize(file.getFileSize());
                     System.out.println("Upload Date: " + file.getUploade_date());
+                    helper.setUploade_date(file.getUploade_date());
                     System.out.println("Downloads: " + file.getDownloads());
+                    helper.setDownloads(file.getDownloads());
                     System.out.println("-----------------------------");
+                    helper.setUser(file.getUser());
+                    specific_file_details.add(helper);
+
                 }
 
-                return ResponseEntity.ok(files);
+                return ResponseEntity.ok(specific_file_details);
             } else {
 
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -223,7 +233,7 @@ public class MainController {
                 if (authService.set_verification_code(id, decodedOtp)) {
 
 
-                    String link = "https://unmanacled-shela-fathomlessly.ngrok-free.dev/verification/" + otp;
+                    String link = "https://ce5e636080a6.ngrok-free.app/verification/" + otp;
 
 
                     boolean emailSent = emailService.sendVerificationEmail(id, link);
@@ -278,14 +288,14 @@ public class MainController {
                     Thread.currentThread().interrupt(); // Restore interrupted status
                 }
                 fileService.startTimer(120,fileId,user_id,true);
-                shareLink = "https://unmanacled-shela-fathomlessly.ngrok-free.dev/share_file/" + encrypt_pass  ;
+                shareLink = "https://ce5e636080a6.ngrok-free.app/share_file/" + encrypt_pass  ;
                 return ResponseEntity.ok(shareLink);
 
             }else {
                 return ResponseEntity.badRequest().body("Invalid link please try again");
             }
 
-
+          //  https://unmanacled-shela-fathomlessly.ngrok-free.dev/
 
         } catch (Exception e) {
             e.printStackTrace();
