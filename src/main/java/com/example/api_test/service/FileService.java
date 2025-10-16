@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -54,7 +56,9 @@ public class FileService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         File_Entity fileEntity = new File_Entity();
-        fileEntity.setFileName(file.getOriginalFilename());
+        String originalFilename = file.getOriginalFilename();
+        String decodedFilename = URLDecoder.decode(originalFilename, StandardCharsets.UTF_8);
+        fileEntity.setFileName(decodedFilename);
         fileEntity.setFileType(file.getContentType());
        // fileEntity.setFileotp(generateOtp());
         fileEntity.setFileSize((int) file.getSize());

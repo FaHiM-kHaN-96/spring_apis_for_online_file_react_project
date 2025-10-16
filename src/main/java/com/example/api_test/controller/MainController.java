@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -362,7 +364,17 @@ public class MainController {
             Authentication authentication) {
         try {
             String username = authentication.getName(); // from JWT
+
+            String originalFilename = file.getOriginalFilename();
+            String decodedFilename = URLDecoder.decode(originalFilename, StandardCharsets.UTF_8);
+            System.out.println("📂 Upload request by: " + username);
+            System.out.println("   → File Name: " + decodedFilename);
+
+            System.out.println("   → Size: " + file.getSize() + " bytes");
+            System.out.println("   → Type: " + file.getContentType());
             File_Entity savedFile = fileService.uploadFile(file, username);
+
+
             return ResponseEntity.ok(savedFile);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
